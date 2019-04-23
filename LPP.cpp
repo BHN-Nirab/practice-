@@ -122,7 +122,6 @@ void makeStandardizeFormOfConstrain(string constrain, double coefficient[], int 
 
 int search(double ara[], double key, int length) {
     for (int i = 0; i < length; i++) {
-        //if(abs(ara[i]-key)<=0.0000001)
         if (ara[i] == key)
             return i;
     }
@@ -140,9 +139,30 @@ int getMaximum(double array[], int startingIndex, int endingIndex) {
     return maxIndex;
 }
 
+int getMinimumForMinimization(double array[], int startingIndex, int endingIndex)
+{
+    int minValue = INT_MAX;
+    int minIndex;
+
+    for (int i = startingIndex; i < endingIndex; i++) {
+        if (array[i] < minValue)
+            minValue = array[i], minIndex = i;
+    }
+
+    return minIndex;
+}
+
 bool isOptimal(double array[], int startingIndex, int endingIndex) {
     for (int i = startingIndex; i < endingIndex; i++)
         if (array[i] > 0)
+            return false;
+
+    return true;
+}
+
+bool isOptimalForMinimization(double array[], int startingIndex, int endingIndex) {
+    for (int i = startingIndex; i < endingIndex; i++)
+        if (array[i] < 0)
             return false;
 
     return true;
@@ -204,103 +224,38 @@ int main() {
     string ch;
     getline(cin, ch);
 
-    if (ch == "1")
-        makeObjectiveFuntiontoMax(coefficientOfObjectiveFunction, lengthOfcoefficientOfObjectiveFunction);
+    if (ch == "1") {
+        //makeObjectiveFuntiontoMax(coefficientOfObjectiveFunction, lengthOfcoefficientOfObjectiveFunction);
 
-    for (int i = 0; i < numberOfConstrain; i++)
-        makeStandardizeFormOfConstrain(constrain[i], coefficientOfConstrains[i],
-                                       lengthOfcoefficientOfObjectiveFunction + 1, numberOfConstrain, i);
+        for (int i = 0; i < numberOfConstrain; i++)
+            makeStandardizeFormOfConstrain(constrain[i], coefficientOfConstrains[i],
+                                           lengthOfcoefficientOfObjectiveFunction + 1, numberOfConstrain, i);
 
-    int m = numberOfConstrain + 3;
-    int n = lengthOfcoefficientOfObjectiveFunction + 3;
-    double table[m][n];
+        int m = numberOfConstrain + 3;
+        int n = lengthOfcoefficientOfObjectiveFunction + 3;
+        double table[m][n];
 
-    for (int i = 0; i < m; i++)
-        for (int j = 0; j < n; j++)
-            table[i][j] = INT_MAX;
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                table[i][j] = INT_MAX;
 
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (i == 0 && j > 0 && j < (n - 2))
-                table[i][j] = coefficientOfObjectiveFunction[j - 1];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == 0 && j > 0 && j < (n - 2))
+                    table[i][j] = coefficientOfObjectiveFunction[j - 1];
 
-            if (j == 0 && i > 0 && i < m - 2)
-                table[i][j] = 0;
+                if (j == 0 && i > 0 && i < m - 2)
+                    table[i][j] = 0;
 
-            if (i > 0 && j > 0 && i < m - 2 && j < n - 1)
-                table[i][j] = coefficientOfConstrains[i - 1][j - 1];
+                if (i > 0 && j > 0 && i < m - 2 && j < n - 1)
+                    table[i][j] = coefficientOfConstrains[i - 1][j - 1];
 
-            if (i == (m - 2) && j > 0 && j < (n - 2))
-                table[i][j] = 0;
-            if (i == (m - 1) && j > 0 && j < (n - 2))
-                table[i][j] = table[0][j] - table[i - 1][j];
-        }
-    }
-
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++)
-            cout << table[i][j] << "\t";
-
-        cout << endl;
-    }
-    cout << endl;
-
-    do {
-        int enteringColumn = getMaximum(table[m - 1], 1, n - 2);
-
-        //find ratio
-        for (int i = 1; i < m - 2; i++) {
-            if (table[i][enteringColumn] > 0)
-                table[i][n - 1] = table[i][n - 2] / table[i][enteringColumn];
-            else
-                table[i][n - 1] = INT_MAX;
-        }
-
-        int leavingRow;
-
-        int minValue = INT_MAX;
-        int minIndex;
-
-        for (int i = 1; i < m - 2; i++) {
-            if (table[i][n - 1] < minValue)
-                minValue = table[i][n - 1], minIndex = i;
-        }
-
-        leavingRow = minIndex;
-
-        table[leavingRow][0] = table[0][enteringColumn];
-
-        for (int i = 1; i < m - 2; i++) {
-            for (int j = 1; j < n - 1; j++) {
-                if (i != leavingRow && j != enteringColumn) {
-                    double oldValue = table[i][j];
-                    table[i][j] = oldValue - ((table[leavingRow][j] * table[i][enteringColumn]) /
-                                              table[leavingRow][enteringColumn]);
-                }
+                if (i == (m - 2) && j > 0 && j < (n - 2))
+                    table[i][j] = 0;
+                if (i == (m - 1) && j > 0 && j < (n - 2))
+                    table[i][j] = table[0][j] - table[i - 1][j];
             }
-
-            if (i != leavingRow)
-                table[i][enteringColumn] = 0;
         }
-
-        double keyValue = table[leavingRow][enteringColumn];
-        for (int i = 1; i < n - 1; i++)
-            table[leavingRow][i] = table[leavingRow][i] / keyValue;
-
-        for (int j = 1; j < n - 2; j++) {
-            double sum = 0;
-            for (int i = 1; i < m - 2; i++) {
-                sum = sum + table[i][0] * table[i][j];
-            }
-
-            table[m - 2][j] = sum;
-        }
-
-        for (int i = 1; i < n - 2; i++)
-            table[m - 1][i] = table[0][i] - table[m - 2][i];
-
-
-        cout << "keyValue: " << keyValue << endl;
 
         for (int i = 0; i < m; i++) {
             for (int j = 0; j < n; j++)
@@ -310,21 +265,214 @@ int main() {
         }
         cout << endl;
 
-    } while (!isOptimal(table[m - 1], 1, n - 2));
+        do {
+            int enteringColumn = getMinimumForMinimization(table[m - 1], 1, n - 2);
 
-    double solution = 0;
+            //find ratio
+            for (int i = 1; i < m - 2; i++) {
+                if (table[i][enteringColumn] > 0)
+                    table[i][n - 1] = table[i][n - 2] / table[i][enteringColumn];
+                else
+                    table[i][n - 1] = INT_MAX;
+            }
 
-    for (int i = 1; i < m - 2; i++)
-        solution = solution + table[i][0] * table[i][n - 2];
+            int leavingRow;
 
-    cout << "Solution is: " << solution << endl;
+            int minValue = INT_MAX;
+            int minIndex;
 
-    for (int i = 1; i < m - 2; i++) {
-        if (table[i][0] > 0) {
-            int index = search(coefficientOfObjectiveFunction, table[i][0], lengthOfcoefficientOfObjectiveFunction);
-            if (coefficientOfConstrains[index] != 0)
-                cout << "x" << index + 1 << " : " << table[i][n - 2] << endl;
+            for (int i = 1; i < m - 2; i++) {
+                if (table[i][n - 1] < minValue)
+                    minValue = table[i][n - 1], minIndex = i;
+            }
+
+            leavingRow = minIndex;
+
+            table[leavingRow][0] = table[0][enteringColumn];
+
+            for (int i = 1; i < m - 2; i++) {
+                for (int j = 1; j < n - 1; j++) {
+                    if (i != leavingRow && j != enteringColumn) {
+                        double oldValue = table[i][j];
+                        table[i][j] = oldValue - ((table[leavingRow][j] * table[i][enteringColumn]) /
+                                                  table[leavingRow][enteringColumn]);
+                    }
+                }
+
+                if (i != leavingRow)
+                    table[i][enteringColumn] = 0;
+            }
+
+            double keyValue = table[leavingRow][enteringColumn];
+            for (int i = 1; i < n - 1; i++)
+                table[leavingRow][i] = table[leavingRow][i] / keyValue;
+
+            for (int j = 1; j < n - 2; j++) {
+                double sum = 0;
+                for (int i = 1; i < m - 2; i++) {
+                    sum = sum + table[i][0] * table[i][j];
+                }
+
+                table[m - 2][j] = sum;
+            }
+
+            for (int i = 1; i < n - 2; i++)
+                table[m - 1][i] = table[0][i] - table[m - 2][i];
+
+
+            cout << "keyValue: " << keyValue << endl;
+
+            for (int i = 0; i < m; i++) {
+                for (int j = 0; j < n; j++)
+                    cout << table[i][j] << "\t";
+
+                cout << endl;
+            }
+            cout << endl;
+
+        } while (!isOptimalForMinimization(table[m - 1], 1, n - 2));
+
+        double solution = 0;
+
+        for (int i = 1; i < m - 2; i++)
+            solution = solution + table[i][0] * table[i][n - 2];
+
+        cout << "Solution is: " << solution << endl;
+
+        for (int i = 1; i < m - 2; i++) {
+            if (table[i][0] != 0) {
+                int index = search(coefficientOfObjectiveFunction, table[i][0], lengthOfcoefficientOfObjectiveFunction);
+                if (coefficientOfConstrains[index] != 0)
+                    cout << "x" << index + 1 << " : " << table[i][n - 2] << endl;
+            }
         }
+    }
+
+    else if(ch=="2")
+    {
+        for (int i = 0; i < numberOfConstrain; i++)
+            makeStandardizeFormOfConstrain(constrain[i], coefficientOfConstrains[i],
+                                           lengthOfcoefficientOfObjectiveFunction + 1, numberOfConstrain, i);
+
+        int m = numberOfConstrain + 3;
+        int n = lengthOfcoefficientOfObjectiveFunction + 3;
+        double table[m][n];
+
+        for (int i = 0; i < m; i++)
+            for (int j = 0; j < n; j++)
+                table[i][j] = INT_MAX;
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (i == 0 && j > 0 && j < (n - 2))
+                    table[i][j] = coefficientOfObjectiveFunction[j - 1];
+
+                if (j == 0 && i > 0 && i < m - 2)
+                    table[i][j] = 0;
+
+                if (i > 0 && j > 0 && i < m - 2 && j < n - 1)
+                    table[i][j] = coefficientOfConstrains[i - 1][j - 1];
+
+                if (i == (m - 2) && j > 0 && j < (n - 2))
+                    table[i][j] = 0;
+                if (i == (m - 1) && j > 0 && j < (n - 2))
+                    table[i][j] = table[0][j] - table[i - 1][j];
+            }
+        }
+
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++)
+                cout << table[i][j] << "\t";
+
+            cout << endl;
+        }
+        cout << endl;
+
+        do {
+            int enteringColumn = getMaximum(table[m - 1], 1, n - 2);
+
+            //find ratio
+            for (int i = 1; i < m - 2; i++) {
+                if (table[i][enteringColumn] > 0)
+                    table[i][n - 1] = table[i][n - 2] / table[i][enteringColumn];
+                else
+                    table[i][n - 1] = INT_MAX;
+            }
+
+            int leavingRow;
+
+            int minValue = INT_MAX;
+            int minIndex;
+
+            for (int i = 1; i < m - 2; i++) {
+                if (table[i][n - 1] < minValue)
+                    minValue = table[i][n - 1], minIndex = i;
+            }
+
+            leavingRow = minIndex;
+
+            table[leavingRow][0] = table[0][enteringColumn];
+
+            for (int i = 1; i < m - 2; i++) {
+                for (int j = 1; j < n - 1; j++) {
+                    if (i != leavingRow && j != enteringColumn) {
+                        double oldValue = table[i][j];
+                        table[i][j] = oldValue - ((table[leavingRow][j] * table[i][enteringColumn]) /
+                                                  table[leavingRow][enteringColumn]);
+                    }
+                }
+
+                if (i != leavingRow)
+                    table[i][enteringColumn] = 0;
+            }
+
+            double keyValue = table[leavingRow][enteringColumn];
+            for (int i = 1; i < n - 1; i++)
+                table[leavingRow][i] = table[leavingRow][i] / keyValue;
+
+            for (int j = 1; j < n - 2; j++) {
+                double sum = 0;
+                for (int i = 1; i < m - 2; i++) {
+                    sum = sum + table[i][0] * table[i][j];
+                }
+
+                table[m - 2][j] = sum;
+            }
+
+            for (int i = 1; i < n - 2; i++)
+                table[m - 1][i] = table[0][i] - table[m - 2][i];
+
+
+            cout << "keyValue: " << keyValue << endl;
+
+            for (int i = 0; i < m; i++) {
+                for (int j = 0; j < n; j++)
+                    cout << table[i][j] << "\t";
+
+                cout << endl;
+            }
+            cout << endl;
+
+        } while (!isOptimal(table[m - 1], 1, n - 2));
+
+        double solution = 0;
+
+        for (int i = 1; i < m - 2; i++)
+            solution = solution + table[i][0] * table[i][n - 2];
+
+        cout << "Solution is: " << solution << endl;
+
+        for (int i = 1; i < m - 2; i++) {
+            if (table[i][0] > 0) {
+                int index = search(coefficientOfObjectiveFunction, table[i][0], lengthOfcoefficientOfObjectiveFunction);
+                if (coefficientOfConstrains[index] != 0)
+                    cout << "x" << index + 1 << " : " << table[i][n - 2] << endl;
+            }
+        }
+
+
+
+
     }
 
     return 0;
@@ -357,9 +505,9 @@ int main() {
 /*
 12x1+16x2
 2
-10x1 + 20x2 <=120
+10x1 + 20x2 >=120
 8x1 + 8x2 <=80
-2
+1
  */
 
 /*
@@ -416,3 +564,10 @@ int main() {
 2x1 + 0x2 + 2x3 <= 7
 2
  */
+/*
+1x1 - 3x2 + 3x3
+3
+3x1 - 1x2 + 2x3 <= 7
+2x1 + 4x2 >= -12
+-4x1 + 3x2 + 8x3 <= 10
+1*/
